@@ -1,10 +1,11 @@
 const { Chat, Message, Attachment } = require("./../models");
 const { sequelize } = require("./../models");
+
 const getAllMessageOfChat = async (req, res, next) => {
   try {
     const messages = await Message.findAll({
       where: {
-        chatId: req.params.id,
+        chatId: req.params.chatId,
       },
       // TODO:inclusion of attachments with the messagees is not done
     });
@@ -27,9 +28,8 @@ const getAllMessageOfChat = async (req, res, next) => {
 };
 
 const createMessage = async (req, res, next) => {
-  const t = sequelize.transaction();
   try {
-    const message = await Message.Create(req.body, { transaction: t });
+    const message = await Message.create(req.body);
     if (req.file) {
       const attachDetails = {
         messageId: message.id,
@@ -38,16 +38,12 @@ const createMessage = async (req, res, next) => {
         url: "",
         size: req.file.size,
       };
-      const attachement = await Attachment.create(attachDetails, {
-        transaction: t,
-      });
+      const attachement = await Attachment.create(attachDetails);
     }
-    await t.commit();
     return res
       .status(200)
-      .json({ success: true, message: "Message Created Successfully" });
+      .json({ success: true, message: "Message Created Successfully" ,data:message});
   } catch (error) {
-    await t.rollback();
     console.log(error);
   }
 };
@@ -65,4 +61,10 @@ const deleteMessage=async(req,res,next)=>{
     } catch (error) {
         console.log(error);
     }
+}
+
+module.exports={
+  getAllMessageOfChat,
+  createMessage,
+  deleteMessage
 }

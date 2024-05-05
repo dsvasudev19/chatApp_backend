@@ -1,89 +1,75 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const cors=require("cors")
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const routes = require("./src/routes");
+const { sequelize } = require("./src/models");
 const app = express();
 const server = createServer(app);
-const io = new Server(server,{
-    cors: {
-      origin: "*", // Adjust this to your specific needs, "*" allows all origins
-      methods: ["GET", "POST"] // Adjust these methods according to your requirements
+const bodyParser = require("body-parser");
+const { Chat } = require("./src/models");
+var corsOptions = {
+  origin: ["http://localhost:3001", "http://localhost:3000"],
+  credentials: true,
+  allowHeader: "Content-Type,Authorization,Set-Cookie",
+};
+
+app.use(cookieParser());
+
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", routes);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:3001"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    allowHeader: "Content-Type,Authorization,Set-Cookie",
+  },
+});
+
+io.on("connection", (socket) => {
+  let receiver;
+  console.log("A user Connected", socket.id);
+
+  socket.on("join", async (data) => {
+    const { to } = data;
+    if (to) {
+      socket.join(to);
     }
   });
 
-io.on("connection", (socket) => {
-  console.log("A user Connected", socket.id);
+  socket.on("privateMessage", (data) => {
+    console.log("sending message to receiver", data);
+    io.to(data.to).emit("receiveMessage", data.message);
+  });
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
-  socket.on("register",(data)=>{
-    socket.join(data)
-    console.log("registering",data);
-  })
-    socket.on("privateMessage", (data) => {
-    console.log(data)
-    io.to(data.to).emit("privateMessage", { ...data, from: socket.id });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({
+    success: false,
+    error: { code: statusCode, message: "Something went wrong!", err },
   });
 });
 
-server.listen(3000, () => {
-  console.log("Server is running on http://localhost:3000");
+sequelize.sync({ force: false }).then(() => {
+  server.listen(3000, () => {
+    console.log("Server is running on http://localhost:3000");
+  });
 });
 
-// TODO:
-// const express = require("express");
-// const http = require("http");
-// const { Server } = require("socket.io");
+module.exports = server;
 
-// const app = express();
-// const server = http.createServer(app);
-// const io = new Server(server);
 
-// // Store connected users and their corresponding sockets
-// const users = {};
-
-// io.on("connection", (socket) => {
-//   console.log("A user connected");
-
-//   // Handle new user registration and join them to socket
-//   socket.on("register", (userId) => {
-//     users[userId] = socket.id;
-//     console.log(`User ${userId} registered with socket id ${socket.id}`);
-//   });
-
-//   // Handle initiating a private chat
-//   socket.on("initiatePrivateChat", (data) => {
-//     const { from, to } = data;
-//     const fromSocketId = users[from];
-//     const toSocketId = users[to];
-//     if (toSocketId) {
-//       socket.join(to); // Join the room with name 'to' (receiver's ID)
-//       io.to(toSocketId).emit("privateChatInitiated", { from }); // Notify the receiver
-//       console.log(`Private chat initiated from ${from} to ${to}`);
-//     } else {
-//       console.log(`User ${to} not found.`);
-//     }
-//   });
-
-//   // Handle incoming messages in a private chat
-//   socket.on("privateMessage", (data) => {
-//     const { to, message } = data;
-//     io.to(to).emit("privateMessage", { ...data, from: socket.id });
-//   });
-
-//   // Handle disconnection and remove user from connected users
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected");
-//     for (const userId in users) {
-//       if (users[userId] === socket.id) {
-//         delete users[userId];
-//         break;
-//       }
-//     }
-//   });
-// });
-
-// server.listen(3000, () => {
-//   console.log("Server is running on http://localhost:3000");
-// });
+module.exports = app;
