@@ -1,6 +1,7 @@
 const { where } = require("sequelize");
 const { User } = require("./../models");
 const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
 const getAll = async (req, res, next) => {
   try {
     const users = await User.findAll();
@@ -121,10 +122,26 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const getUserByUsernameSearch=async(req,res,next)=>{
+  try {
+    const users=await User.findAll({
+      where:{
+        username:{
+          [Op.like]:`%${req.params.username}%`
+        }
+      }
+    })
+    return res.status(200).json({success:true,message:"Successfully fetched the users",data:users})
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
   getAll,
   getById,
   create,
   update,
   deleteUser,
+  getUserByUsernameSearch
 };

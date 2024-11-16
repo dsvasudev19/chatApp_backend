@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
@@ -22,8 +23,14 @@ app.use(bodyParser.json());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(express.static("uploads"))
 app.use("/api", routes);
+
+
+app.get("/",(req,res)=>{
+  res.send("Backend is working fine....")
+})
+
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "http://localhost:3001","http://localhost:5173","*"],
@@ -47,7 +54,7 @@ io.on("connection", (socket) => {
 
   socket.on("privateMessage", (data) => {
     console.log("sending message to receiver", data);
-    io.to(data.chatId).emit("receiveMessage", {message:data.message,chatId:data.chatId,senderId:data.senderId});
+    io.to(data.chatId).emit("receiveMessage", {message:data.message,chatId:data.chatId,senderId:data.senderId,attachment:data.attachment});
   });
 
   socket.on("disconnect", () => {

@@ -11,12 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Message.hasOne(models.Attachment,{
+        as:"attachments",
+        foreignKey:"messageId"
+      })
     }
   }
   Message.init({
     senderId: DataTypes.INTEGER,
     chatId: DataTypes.INTEGER,
-    message: DataTypes.STRING
+    message: DataTypes.STRING,
+    attachment:DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Message',
