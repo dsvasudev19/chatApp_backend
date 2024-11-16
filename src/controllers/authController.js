@@ -20,7 +20,7 @@ const login=async(req,res,next)=>{
                 
             }else{
                 const jwttoken=await jwt.sign({id:user.id},"secretissecret",{
-                    expiresIn:"1hr"
+                    expiresIn:"12hr"
                 });
                 res.cookie("token",jwttoken)
                 
@@ -63,9 +63,10 @@ const register=async(req,res,next)=>{
 
 const getUserByToken=async(req,res,next)=>{
     try {
-        const token=req.cookies.token;`
-        console.log(token)
-        console.log(token)`
+        const token=req.cookies.token;
+        if(!token){
+            token=req.headers.authorization.split(" ")[1];
+        }
         if(!token){
             return res.status(401).json({success:false,message:"No login token found"})
         }
