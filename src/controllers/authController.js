@@ -63,8 +63,8 @@ const register=async(req,res,next)=>{
 
 const getUserByToken=async(req,res,next)=>{
     try {
-        const token=req.cookies.token;
-        if(!token && req.headers.authorization){
+        let token=req.cookies.token;
+        if(req.headers.authorization && !token){
             console.log("token not found in cookies");
             token=req.headers['authorization'].split(" ")[1];
             // token=req.headers.authorization.split(" ")[1];
@@ -87,8 +87,14 @@ const getUserByToken=async(req,res,next)=>{
     }
 }
 
+const logout=async(req,res,next)=>{
+    res.clearCookie("token");
+    return res.status(200).json({success:true,message:"Successfully logged out"})
+}
+
 module.exports={
     login,
     register,
-    getUserByToken
+    getUserByToken,
+    logout
 }
