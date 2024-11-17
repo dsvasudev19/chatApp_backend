@@ -7,11 +7,7 @@ const getAllMessageOfChat = async (req, res, next) => {
       where: {
         chatId: req.params.chatId,
       },
-      include:[{
-        model:Attachment,
-        as:"attachments"
-      }]
-      // TODO:inclusion of attachments with the messagees is not done
+     
     });
     if (messages) {
       return res
@@ -43,7 +39,7 @@ const createMessage = async (req, res, next) => {
         url: "",
         size: req.file.size,
       };
-      const attachement = await Attachment.create(attachDetails);
+      // const attachement = await Attachment.create(attachDetails);
     }
     return res
       .status(200)
