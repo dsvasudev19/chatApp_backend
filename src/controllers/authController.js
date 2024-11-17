@@ -22,9 +22,9 @@ const login=async(req,res,next)=>{
                 const jwttoken=await jwt.sign({id:user.id},"secretissecret",{
                     expiresIn:"12hr"
                 });
-                res.cookie("token",jwttoken)
+                res.cookie("token",jwttoken,{httpOnly:true ,secure:true,sameSite:'none'})
                 
-                res.status(200).cookie("token",jwttoken).json({success:true,message:"Logged in Successfully",data:{token:jwttoken}}).send();
+                res.status(200).cookie("token",jwttoken,{httpOnly:true ,secure:true,sameSite:'none'}).json({success:true,message:"Logged in Successfully",data:{token:jwttoken}}).send();
             }
         }
     } catch (error) {
@@ -64,8 +64,10 @@ const register=async(req,res,next)=>{
 const getUserByToken=async(req,res,next)=>{
     try {
         const token=req.cookies.token;
-        if(!token){
-            token=req.headers.authorization.split(" ")[1];
+        if(!token && req.headers.authorization){
+            console.log("token not found in cookies");
+            token=req.headers['authorization'].split(" ")[1];
+            // token=req.headers.authorization.split(" ")[1];
         }
         if(!token){
             return res.status(401).json({success:false,message:"No login token found"})
